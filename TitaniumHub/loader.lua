@@ -61,12 +61,15 @@ end
 -- Start Boot Sequence
 task.spawn(function()
     log("Loading Core...")
-    _G.Titanium.Theme = load("ui/theme.lua")
-    _G.Titanium.UI = load("ui/library.lua")
+    local Titanium = getgenv().Titanium
+    
+    Titanium.Theme = load("ui/theme.lua")
+    Titanium.UI = load("ui/library.lua")
     
     log("Loading Main Logic...")
     load("main.lua")
     
     log("Successfully Injected!")
 end)
+
 
