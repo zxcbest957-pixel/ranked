@@ -7,13 +7,14 @@ local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 
-local Titanium = getgenv().Titanium or { Theme = {} }
+local Titanium = getgenv().Titanium or _G.Titanium or { Theme = {} }
 local Theme = Titanium.Theme or {
     Main = Color3.fromRGB(10, 10, 10),
     Accent = Color3.fromRGB(0, 255, 150),
     Text = Color3.fromRGB(255, 255, 255),
     SubText = Color3.fromRGB(160, 160, 160)
 }
+
 
 
 local Lib = {}

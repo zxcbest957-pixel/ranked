@@ -1,9 +1,16 @@
 -- [[
 --    TITANIUM HUB - PREMIER CHEAT SYSTEM
---    Official Loader v1.0
+--    Official Loader v1.1 [BULLETPROOF]
 -- ]]
 
 repeat task.wait() until game:IsLoaded()
+
+-- Use both getgenv and _G for maximum compatibility
+local function getTitanium()
+    if getgenv().Titanium then return getgenv().Titanium end
+    if _G.Titanium then return _G.Titanium end
+    return nil
+end
 
 local function log(txt)
     print("[TITANIUM] " .. tostring(txt))
@@ -11,24 +18,18 @@ end
 
 log("Initializing System...")
 
--- Global Setup
-getgenv().Titanium = {
+-- Initialize Global Table
+local Titanium = {
     Config = {},
     Modules = {},
     Connections = {},
     UI = nil,
-    Version = "1.0.0"
+    Version = "1.1.0"
 }
+getgenv().Titanium = Titanium
+_G.Titanium = Titanium
 
 local repositoryBaseURL = "https://raw.githubusercontent.com/zxcbest957-pixel/ranked/main/TitaniumHub/"
-
--- Loader UI (Optional but nice)
-local function createLoaderUI()
-    -- We can add a small progress bar here later
-    log("Checking Environment...")
-end
-
-createLoaderUI()
 
 -- Module Loading Logic
 local function load(path)
@@ -49,9 +50,15 @@ local function load(path)
     if success and content then
         local func, err = loadstring(content)
         if func then
-            return func()
+            -- Pass Titanium to the module so it doesn't have to guess the environment
+            local success, result = pcall(func)
+            if success then
+                return result
+            else
+                warn("[TITANIUM] Execution error in " .. path .. ": " .. tostring(result))
+            end
         else
-            warn("[TITANIUM] Error in " .. path .. ": " .. tostring(err) .. "\nContent snippet: " .. content:sub(1, 100))
+            warn("[TITANIUM] Syntax error in " .. path .. ": " .. tostring(err))
         end
     else
         warn("[TITANIUM] Failed to find module: " .. path)
@@ -61,15 +68,15 @@ end
 -- Start Boot Sequence
 task.spawn(function()
     log("Loading Core...")
-    local Titanium = getgenv().Titanium
     
-    Titanium.Theme = load("ui/theme.lua")
-    Titanium.UI = load("ui/library.lua")
+    -- Ensure Titanium is available in this thread
+    local T = getTitanium()
+    
+    T.Theme = load("ui/theme.lua")
+    T.UI = load("ui/library.lua")
     
     log("Loading Main Logic...")
     load("main.lua")
     
     log("Successfully Injected!")
 end)
-
-
