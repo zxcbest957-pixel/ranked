@@ -20,6 +20,8 @@ getgenv().Titanium = {
     Version = "1.0.0"
 }
 
+local repositoryBaseURL = "https://raw.githubusercontent.com/zxcbest957-pixel/ranked/main/TitaniumHub/"
+
 -- Loader UI (Optional but nice)
 local function createLoaderUI()
     -- We can add a small progress bar here later
@@ -30,18 +32,26 @@ createLoaderUI()
 
 -- Module Loading Logic
 local function load(path)
-    local success, content = pcall(function()
-        -- For development: use readfile
-        -- For production: use game:HttpGet
-        return readfile("TitaniumHub/" .. path)
-    end)
+    local content = nil
+    local success = false
+    
+    -- 1. Try local file first (for dev)
+    if isfile and readfile and isfile("TitaniumHub/" .. path) then
+        success, content = pcall(function() return readfile("TitaniumHub/" .. path) end)
+    end
+    
+    -- 2. Fallback to GitHub
+    if not success or not content then
+        local url = repositoryBaseURL .. path
+        success, content = pcall(function() return game:HttpGet(url) end)
+    end
     
     if success and content then
         local func, err = loadstring(content)
         if func then
             return func()
         else
-            warn("[TITANIUM] Error in " .. path .. ": " .. tostring(err))
+            warn("[TITANIUM] Error in " .. path .. ": " .. tostring(err) .. "\nContent snippet: " .. content:sub(1, 100))
         end
     else
         warn("[TITANIUM] Failed to find module: " .. path)
@@ -51,11 +61,12 @@ end
 -- Start Boot Sequence
 task.spawn(function()
     log("Loading Core...")
-    load("ui/theme.lua")
-    load("ui/library.lua")
+    _G.Titanium.Theme = load("ui/theme.lua")
+    _G.Titanium.UI = load("ui/library.lua")
     
     log("Loading Main Logic...")
     load("main.lua")
     
     log("Successfully Injected!")
 end)
+
