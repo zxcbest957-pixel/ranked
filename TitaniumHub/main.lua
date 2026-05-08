@@ -7,65 +7,53 @@ local Lib = Titanium.UI
 
 local Window = Lib:CreateWindow()
 
--- [[ GLOBALS FOR FEATURES ]]
-local Features = {
-    Killaura = false,
-    KillauraRange = 15,
-    ESP = false,
-    Speed = 16
-}
-
--- [[ FEATURE LOGIC ]]
-task.spawn(function()
-    while task.wait() do
-        -- Killaura Loop
-        if Features.Killaura then
-            local target = nil
-            local dist = Features.KillauraRange
-            for _, p in pairs(game:GetService("Players"):GetPlayers()) do
-                if p ~= game:GetService("Players").LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                    local d = (p.Character.HumanoidRootPart.Position - game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
-                    if d < dist then
-                        dist = d
-                        target = p
-                    end
-                end
-            end
-            if target then
-                -- Perform attack (this is game-specific, e.g. Bedwars remotes)
-                print("Attacking " .. target.Name)
-            end
-        end
+-- [[ DYNAMIC FEATURE HANDLER ]]
+local function toggleFeature(path, state, isLegacy)
+    if state then
+        Titanium:LoadModule(path, isLegacy)
+        print("[TITANIUM] Activated: " .. path)
+    else
+        -- Logic to disable feature (if supported by module)
+        print("[TITANIUM] Deactivated: " .. path)
     end
-end)
+end
 
 -- COMBAT TAB
 local Combat = Window:CreateTab("Combat")
-Combat:CreateToggle("Killaura", function(state)
-    Features.Killaura = state
+Combat:CreateToggle("Aim Assist", function(state)
+    toggleFeature("features/aimbot.lua", state, true)
 end)
-Combat:CreateSlider("Killaura Range", 5, 50, 15, function(val)
-    Features.KillauraRange = val
+Combat:CreateToggle("Killaura", function(state)
+    toggleFeature("features/killaura.lua", state, true)
 end)
 
--- VISUALS TAB
-local Visuals = Window:CreateTab("Visuals")
-Visuals:CreateToggle("ESP Boxes", function(state)
-    Features.ESP = state
-    -- Simple ESP logic using Drawing API or Highlights
+-- BEDWARS TAB
+local Bedwars = Window:CreateTab("Bedwars")
+Bedwars:CreateToggle("Bed Nuke", function(state)
+    toggleFeature("features/bed_nuke.lua", state, true)
+end)
+Bedwars:CreateToggle("Auto Davey", function(state)
+    toggleFeature("features/auto_davey.lua", state, true)
+end)
+Bedwars:CreateToggle("Kit Ban", function(state)
+    toggleFeature("features/kit_ban.lua", state, true)
 end)
 
 -- MOVEMENT TAB
 local Movement = Window:CreateTab("Movement")
 Movement:CreateSlider("WalkSpeed", 16, 100, 16, function(val)
-    game:GetService("Players").LocalPlayer.Character.Humanoid.WalkSpeed = val
+    if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = val
+    end
 end)
 
 -- UTILS TAB
 local Utils = Window:CreateTab("Utils")
-Utils:CreateToggle("Auto-Toxic", function(state)
-    print("Auto-Toxic: " .. tostring(state))
+Utils:CreateToggle("Pro Player Analyzer", function(state)
+    -- This could be our local module or remote
+    print("Analyzer Toggled: " .. tostring(state))
 end)
 
-print("💎 Titanium Hub V1.0 Ready.")
+print("💎 Titanium Hub: Synchronization Complete.")
+
 

@@ -1,16 +1,9 @@
 -- [[
 --    TITANIUM HUB - PREMIER CHEAT SYSTEM
---    Official Loader v1.1 [BULLETPROOF]
+--    Official Loader v1.2 [DYNAMIC LOADING]
 -- ]]
 
 repeat task.wait() until game:IsLoaded()
-
--- Use both getgenv and _G for maximum compatibility
-local function getTitanium()
-    if getgenv().Titanium then return getgenv().Titanium end
-    if _G.Titanium then return _G.Titanium end
-    return nil
-end
 
 local function log(txt)
     print("[TITANIUM] " .. tostring(txt))
@@ -18,65 +11,67 @@ end
 
 log("Initializing System...")
 
--- Initialize Global Table
+-- Global Setup
 local Titanium = {
     Config = {},
     Modules = {},
     Connections = {},
     UI = nil,
-    Version = "1.1.0"
+    Version = "1.2.0"
 }
 getgenv().Titanium = Titanium
 _G.Titanium = Titanium
 
-local repositoryBaseURL = "https://raw.githubusercontent.com/zxcbest957-pixel/ranked/main/TitaniumHub/"
+local REPO_TITANIUM = "https://raw.githubusercontent.com/zxcbest957-pixel/ranked/main/TitaniumHub/"
+local REPO_TUMBA = "https://raw.githubusercontent.com/daniaggbro-cloud/betatesttumba/main/TumbaHub-main%20(3)/TumbaHub-main/tumbaHub/"
 
--- Module Loading Logic
-local function load(path)
+-- [[ ADVANCED MODULE LOADER ]]
+function Titanium:LoadModule(path, useLegacy)
+    if Titanium.Modules[path] then return Titanium.Modules[path] end
+    
     local content = nil
     local success = false
     
-    -- 1. Try local file first (for dev)
-    if isfile and readfile and isfile("TitaniumHub/" .. path) then
-        success, content = pcall(function() return readfile("TitaniumHub/" .. path) end)
+    -- 1. Try local file first (for developers)
+    local localPath = "TitaniumHub/" .. path
+    if isfile and readfile and isfile(localPath) then
+        success, content = pcall(function() return readfile(localPath) end)
     end
     
-    -- 2. Fallback to GitHub
+    -- 2. Fetch from GitHub
     if not success or not content then
-        local url = repositoryBaseURL .. path
+        local baseURL = useLegacy and REPO_TUMBA or REPO_TITANIUM
+        local url = baseURL .. path
         success, content = pcall(function() return game:HttpGet(url) end)
     end
     
-    if success and content then
+    if success and content and #content > 10 then
         local func, err = loadstring(content)
         if func then
-            -- Pass Titanium to the module so it doesn't have to guess the environment
-            local success, result = pcall(func)
-            if success then
-                return result
+            local s, result = pcall(func)
+            if s then
+                Titanium.Modules[path] = result or true
+                return Titanium.Modules[path]
             else
-                warn("[TITANIUM] Execution error in " .. path .. ": " .. tostring(result))
+                warn("[TITANIUM] Execution Error in " .. path .. ": " .. tostring(result))
             end
         else
-            warn("[TITANIUM] Syntax error in " .. path .. ": " .. tostring(err))
+            warn("[TITANIUM] Syntax Error in " .. path .. ": " .. tostring(err))
         end
     else
-        warn("[TITANIUM] Failed to find module: " .. path)
+        warn("[TITANIUM] Failed to fetch module: " .. path)
     end
 end
 
 -- Start Boot Sequence
 task.spawn(function()
-    log("Loading Core...")
+    log("Loading Core Environment...")
     
-    -- Ensure Titanium is available in this thread
-    local T = getTitanium()
+    Titanium:LoadModule("ui/theme.lua")
+    Titanium.UI = Titanium:LoadModule("ui/library.lua")
     
-    T.Theme = load("ui/theme.lua")
-    T.UI = load("ui/library.lua")
+    log("Synchronizing Main Logic...")
+    Titanium:LoadModule("main.lua")
     
-    log("Loading Main Logic...")
-    load("main.lua")
-    
-    log("Successfully Injected!")
+    log("Titanium Hub v1.2 Ready!")
 end)
